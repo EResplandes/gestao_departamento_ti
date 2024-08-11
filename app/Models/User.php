@@ -9,6 +9,7 @@ use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Support\Facades\Hash;
 
 class User extends Authenticatable implements FilamentUser
 {
@@ -23,6 +24,8 @@ class User extends Authenticatable implements FilamentUser
         'name',
         'email',
         'password',
+        'tipo_usuario',
+        'status'
     ];
 
     /**
@@ -45,11 +48,18 @@ class User extends Authenticatable implements FilamentUser
     ];
 
     // Metódo responsável por validar quais maisl poderao acessar painel de admin do filament
-
     public function canAccessPanel(Panel $panel): bool
     {
         // return str_ends_with($this->email, '@gruporialma.com.br') && $this->hasVerifiedEmail();
         return true;
+    }
+
+    // Metódo responsável por setar campo password com hash sempre que for inserido um registro
+    public function setPasswordAttribute($value)
+    {
+        if (!empty($value)) {
+            $this->attributes['password'] = Hash::make($value);
+        }
     }
 
     public function chamados()

@@ -29,11 +29,17 @@ class ChamadoService
 
             $userId = Auth::id();
 
-            Chamado::where('id', $chamado)
+            $chamado = Chamado::where('id', $chamado)
                 ->update([
                     'tecnico_id' => $userId,
                     'status_id' => 2
                 ]);
+
+            HistoricoChamado::create([
+                'observacao' => 'Chamado criado pelo usuário' . Auth::name(),
+                'status_id' => 1,
+                'chamado_id' => $chamado->id
+            ]);
 
             DB::commit();
 
@@ -70,7 +76,6 @@ class ChamadoService
             DB::commit();
 
             $this->notificacao->notificarSucesso('Chamado finalizado com sucesso!');
-            
         } catch (\Exception $e) {
 
             DB::rollBack();

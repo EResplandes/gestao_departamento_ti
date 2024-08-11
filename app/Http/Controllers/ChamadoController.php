@@ -26,5 +26,4 @@ class ChamadoController extends Controller
         $query = $this->chamadoService->finalizarChamado($request);
         return $query;
     }
-
 }

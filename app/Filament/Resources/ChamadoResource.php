@@ -7,15 +7,17 @@ use App\Models\Categoria;
 use App\Models\Chamado;
 use App\Models\Departamento;
 use App\Models\User;
+use App\Models\Status;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Forms\Components\FileUpload;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Grid;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Actions\Action;
+use Filament\Tables\Filters\SelectFilter;
 
 class ChamadoResource extends Resource
 {
@@ -81,7 +83,6 @@ class ChamadoResource extends Resource
                 Tables\Columns\TextColumn::make('status.status')
                     ->searchable()
                     ->formatStateUsing(function ($state) {
-                        // Defina a cor com base no valor do status
                         switch ($state) {
                             case 'Novo':
                                 return '<span style="color: green;">' . htmlspecialchars($state) . '</span>';
@@ -93,36 +94,62 @@ class ChamadoResource extends Resource
                                 return '<span>' . htmlspecialchars($state) . '</span>';
                         }
                     })
-                    ->html(),  // Permite HTML no valor da célula
+                    ->html(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Dt. Abertura')
                     ->dateTime('d/m/Y H:i')
+                    ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('solicitante')
+                    ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('descricao')
+                    ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('email')
+                    ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('departamento.departamento')
+                    ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('tecnico.name')
+                    ->sortable()
                     ->searchable()
             ])
             ->filters([
-                //
+                Filter::make('status')
+                    ->label('Status'),
+                Filter::make('solicitante')
+                    ->label('Solicitante'),
+                Filter::make('descricao')
+                    ->label('Descrição'),
+                SelectFilter::make('departamento_id')
+                    ->label('Departamento')
+                    ->options([
+                        Departamento::all()->pluck('departamento', 'id')->toArray()
+                    ]),
+                SelectFilter::make('status_id')
+                    ->label('Status')
+                    ->options([
+                        Status::all()->pluck('status', 'id')->toArray()
+                    ]),
+                SelectFilter::make('tecnico_id')
+                    ->label('Técnico')
+                    ->options([
+                        User::all()->pluck('name', 'id')->toArray()
+                    ]),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
 
                 // Metódo responsável por associar chamado a usuário
                 Action::make('associarTecnico')
-                    ->label('Associar a Mim')
+                    ->label('Associar')
                     ->url(fn(Chamado $record) => route('chamados.associar-tecnico', $record->id)) // Passa o ID do chamado na URL
                     ->requiresConfirmation()
                     ->color('success')
                     ->icon('heroicon-c-plus')
                     ->openUrlInNewTab(false),
+
 
                 // Metódo responsável por finalizar chamado
                 Action::make('finalizarChamado')
@@ -134,11 +161,15 @@ class ChamadoResource extends Resource
                             ->label('Observação')
                             ->required()
                             ->columnSpan('full'),
-                    ])
-                    ->action(function (array $data, Post $record): void {
-                        $record->author()->associate($data['authorId']);
-                        $record->save();
-                    })
+                    ]),
+                // ->action(function (array $data, Post $record): void {
+                //     $record->author()->associate($data['authorId']);
+                //     $record->save();
+                // })
+
+                Tables\Actions\ViewAction::make(),
+                Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
